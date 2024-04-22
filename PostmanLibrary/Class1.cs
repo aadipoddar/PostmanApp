@@ -1,7 +1,6 @@
-﻿namespace PostmanLibrary
-{
-    public class Class1
-    {
+﻿namespace PostmanLibrary;
 
-    }
+public class Class1
+{
+
 }
