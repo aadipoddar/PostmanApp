@@ -1,6 +1,6 @@
 ﻿namespace PostmanLibrary;
 
-public class Class1
+public enum HttpAction
 {
-
+    GET
 }
