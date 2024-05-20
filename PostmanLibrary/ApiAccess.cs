@@ -1,46 +1,72 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace PostmanLibrary;
 
 public class ApiAccess : IApiAccess
 {
-    private readonly HttpClient client = new();
+	private readonly HttpClient client = new();
 
-    public async Task<string> CallApiAsync(
-        string url,
-        bool formatOutput = true,
-        HttpAction action = HttpAction.GET)
-    {
-        var response = await client.GetAsync(url);
+	public async Task<string> CallApiAsync(
+		string url,
+		string content,
+		HttpAction action = HttpAction.GET,
+		bool formatOutput = true)
+	{
+		StringContent stringContent = new(content, Encoding.UTF8, "application/json");
+		return await CallApiAsync(url, stringContent, action, formatOutput);
+	}
 
-        if (response.IsSuccessStatusCode)
-        {
-            string json = await response.Content.ReadAsStringAsync();
 
-            if (formatOutput)
-            {
-                var jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
-                json = JsonSerializer.Serialize(jsonElement,
-                    new JsonSerializerOptions { WriteIndented = true });
-            }
 
-            return json;
-        }
+	public async Task<string> CallApiAsync(
+		string url,
+		HttpContent? content = null,
+		HttpAction action = HttpAction.GET,
+		bool formatOutput = true)
+	{
+		HttpResponseMessage? response;
 
-        else
-        {
-            return $"Error: {response.StatusCode}";
-        }
-    }
+		switch (action)
+		{
+			case HttpAction.GET:
+				response = await client.GetAsync(url);
+				break;
+			case HttpAction.POST:
+				response = await client.PostAsync(url, content);
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(action), action, null);
+		}
 
-    public bool IsValidUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            return false;
+		if (response.IsSuccessStatusCode)
+		{
+			string json = await response.Content.ReadAsStringAsync();
 
-        bool output = Uri.TryCreate(url, UriKind.Absolute, out Uri uriOutput) &&
-            (uriOutput.Scheme == Uri.UriSchemeHttps);
+			if (formatOutput)
+			{
+				var jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
+				json = JsonSerializer.Serialize(jsonElement,
+					new JsonSerializerOptions { WriteIndented = true });
+			}
 
-        return output;
-    }
+			return json;
+		}
+
+		else
+		{
+			return $"Error: {response.StatusCode}";
+		}
+	}
+
+	public bool IsValidUrl(string url)
+	{
+		if (string.IsNullOrWhiteSpace(url))
+			return false;
+
+		bool output = Uri.TryCreate(url, UriKind.Absolute, out Uri uriOutput) &&
+			(uriOutput.Scheme == Uri.UriSchemeHttps);
+
+		return output;
+	}
 }

@@ -4,37 +4,45 @@ namespace PostmanUI;
 
 public partial class Dashboard : Form
 {
-    private readonly IApiAccess api = new ApiAccess();
+	private readonly IApiAccess api = new ApiAccess();
 
-    public Dashboard()
-    {
-        InitializeComponent();
-        httpVerbSelection.SelectedItem = "GET";
-    }
+	public Dashboard()
+	{
+		InitializeComponent();
+		httpVerbSelection.SelectedItem = "GET";
+	}
 
-    private async void callApi_Click(object sender, EventArgs e)
-    {
-        systemStatus.Text = "Calling API...";
-        resultsText.Text = "";
+	private async void callApi_Click(object sender, EventArgs e)
+	{
+		systemStatus.Text = "Calling API...";
+		resultsText.Text = "";
 
-        // Validate the API URL
-        if (api.IsValidUrl(apiText.Text) == false)
-        {
-            systemStatus.Text = "Invalid URL";
-            return;
-        }
+		// Validate the API URL
+		if (api.IsValidUrl(apiText.Text) == false)
+		{
+			systemStatus.Text = "Invalid URL";
+			return;
+		}
 
-        try
-        {
-            resultsText.Text = await api.CallApiAsync(apiText.Text);
-            callData.SelectedTab = resultsTab;
+		HttpAction action;
+		if (Enum.TryParse(httpVerbSelection.SelectedItem!.ToString(), out action) == false)
+		{
+			systemStatus.Text = "Invalid HTTP Verb";
+			return;
+		}
 
-            systemStatus.Text = "Ready";
-        }
-        catch (Exception ex)
-        {
-            resultsText.Text = "Error: " + ex.Message;
-            systemStatus.Text = "Error";
-        }
-    }
+		try
+		{
+			resultsText.Text = await api.CallApiAsync(apiText.Text, bodyText.Text, action);
+			callData.SelectedTab = resultsTab;
+			resultsTab.Focus();
+
+			systemStatus.Text = "Ready";
+		}
+		catch (Exception ex)
+		{
+			resultsText.Text = "Error: " + ex.Message;
+			systemStatus.Text = "Error";
+		}
+	}
 }
